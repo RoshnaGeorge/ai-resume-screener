@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Resume Screener</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg2: #111118;
+    --bg3: #1a1a24;
+    --bg4: #22222e;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f0f0f8;
+    --text2: #9090a8;
+    --text3: #5a5a72;
+    --accent: #7c5cfc;
+    --accent2: #a87cff;
+    --teal: #2dd4bf;
+    --amber: #fbbf24;
+    --green: #4ade80;
+    --red: #f87171;
+    --pink: #f472b6;
+    --r: 10px;
+    --r2: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--bg2);
+  }
+  .logo {
+    width: 36px; height: 36px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: grid; place-items: center;
+  }
+  .logo svg { width: 20px; height: 20px; fill: white; }
+  .brand { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
+  .brand span { color: var(--accent2); }
+  .badge {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: rgba(124,92,252,0.15);
+    color: var(--accent2);
+    border: 1px solid rgba(124,92,252,0.3);
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  /* ── Layout ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media(max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--r2);
+    padding: 1.5rem;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text2);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* ── JD Textarea ── */
+  textarea {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    padding: 1rem;
+    resize: vertical;
+    min-height: 200px;
+    line-height: 1.7;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  textarea::placeholder { color: var(--text3); }
+
+  /* ── Upload zone ── */
+  .upload-zone {
+    border: 2px dashed var(--border2);
+    border-radius: var(--r);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg3);
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(124,92,252,0.05); }
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon { font-size: 32px; margin-bottom: 0.75rem; }
+  .upload-zone p { color: var(--text2); font-size: 13px; }
+  .upload-zone strong { color: var(--accent2); }
+
+  /* ── File chips ── */
+  .file-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1rem; }
+  .file-chip {
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 10px 4px 8px;
+    font-size: 12px;
+    color: var(--text2);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .file-chip .ext {
+    background: rgba(124,92,252,0.2);
+    color: var(--accent2);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .file-chip button {
+    background: none; border: none; color: var(--text3);
+    cursor: pointer; font-size: 14px; line-height: 1; padding: 0;
+  }
+  .file-chip button:hover { color: var(--red); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 20px;
+    border-radius: var(--r);
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.18s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    width: 100%;
+    justify-content: center;
+    margin-top: 1rem;
+    font-size: 15px;
+    padding: 13px;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-ghost {
+    background: var(--bg3);
+    color: var(--text2);
+    border: 1px solid var(--border);
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+  }
+  .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+
+  /* ── Tabs ── */
+  .tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; background: var(--bg3); padding: 4px; border-radius: var(--r); }
+  .tab {
+    flex: 1; padding: 8px; text-align: center; border-radius: 7px;
+    font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text2);
+    transition: all 0.15s; border: none; background: none; font-family: 'Sora', sans-serif;
+  }
+  .tab.active { background: var(--bg2); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+  /* ── Results area ── */
+  #results { margin-top: 2rem; }
+  .results-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .results-title { font-size: 18px; font-weight: 600; }
+  .results-count { color: var(--text2); font-size: 13px; }
+
+  /* ── Candidate card ── */
+  .candidate {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--r2);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.2s;
+  }
+  .candidate:hover { border-color: var(--border2); }
+  .candidate-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  .rank-badge {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 14px;
+    flex-shrink: 0;
+  }
+  .rank-1 { background: rgba(251,191,36,0.15); color: var(--amber); border: 1.5px solid rgba(251,191,36,0.4); }
+  .rank-2 { background: rgba(148,163,184,0.15); color: #94a3b8; border: 1.5px solid rgba(148,163,184,0.3); }
+  .rank-3 { background: rgba(251,146,60,0.15); color: #fb923c; border: 1.5px solid rgba(251,146,60,0.3); }
+  .rank-n { background: var(--bg4); color: var(--text2); border: 1px solid var(--border); }
+  .cand-name { font-size: 16px; font-weight: 600; }
+  .cand-meta { color: var(--text2); font-size: 12px; margin-top: 2px; }
+  .tier-pill {
+    margin-left: auto;
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    padding: 4px 10px; border-radius: 20px;
+  }
+  .tier-Excellent { background: rgba(74,222,128,0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .tier-Good { background: rgba(45,212,191,0.12); color: var(--teal); border: 1px solid rgba(45,212,191,0.3); }
+  .tier-Average { background: rgba(251,191,36,0.12); color: var(--amber); border: 1px solid rgba(251,191,36,0.3); }
+  .tier-below { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+
+  /* ── Score bar ── */
+  .score-section { margin: 1rem 0; }
+  .score-main {
+    display: flex; align-items: baseline; gap: 8px; margin-bottom: 0.75rem;
+  }
+  .score-big { font-size: 32px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .score-label { color: var(--text2); font-size: 13px; }
+  .score-bar-wrap {
+    height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden;
+  }
+  .score-bar-fill {
+    height: 100%; border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+    background: linear-gradient(90deg, var(--accent), var(--teal));
+  }
+
+  /* ── Sub-scores ── */
+  .sub-scores { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-top: 1rem; }
+  @media(max-width: 600px) { .sub-scores { grid-template-columns: repeat(2,1fr); } }
+  .sub-score {
+    background: var(--bg3);
+    border-radius: var(--r);
+    padding: 10px 12px;
+  }
+  .sub-score-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+  .sub-score-val { font-size: 18px; font-weight: 600; font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+  .c-text { color: var(--accent2); }
+  .c-teal { color: var(--teal); }
+  .c-amber { color: var(--amber); }
+  .c-green { color: var(--green); }
+
+  /* ── Skills ── */
+  .skills-section { margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+  .skill-group { flex: 1; min-width: 200px; }
+  .skill-group-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .skill-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .skill-tag {
+    padding: 3px 9px; border-radius: 5px; font-size: 12px; font-family: 'JetBrains Mono', monospace;
+  }
+  .skill-matched { background: rgba(124,92,252,0.15); color: var(--accent2); }
+  .skill-missing { background: rgba(248,113,113,0.1); color: #f87171; text-decoration: line-through; opacity: 0.7; }
+  .skill-extra { background: var(--bg3); color: var(--text2); }
+
+  /* ── Expand toggle ── */
+  .expand-btn {
+    background: none; border: none; color: var(--text3); cursor: pointer;
+    font-size: 12px; font-family: 'Sora', sans-serif;
+    display: flex; align-items: center; gap: 4px; margin-top: 0.75rem;
+    padding: 0; transition: color 0.15s;
+  }
+  .expand-btn:hover { color: var(--text2); }
+  .expandable { display: none; }
+  .expandable.open { display: block; }
+
+  /* ── Summary stats ── */
+  .summary-stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  @media(max-width: 600px) { .summary-stats { grid-template-columns: repeat(2,1fr); } }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r);
+    padding: 1rem 1.25rem;
+  }
+  .stat-val { font-size: 24px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .stat-lbl { color: var(--text2); font-size: 12px; margin-top: 2px; }
+
+  /* ── Loading ── */
+  .loading {
+    text-align: center; padding: 3rem;
+    color: var(--text2);
+  }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Empty / Error ── */
+  .empty { text-align: center; padding: 3rem; color: var(--text2); }
+  .empty .icon { font-size: 40px; margin-bottom: 0.75rem; }
+  .error-msg {
+    background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+    color: var(--red); border-radius: var(--r); padding: 1rem; margin-top: 1rem; font-size: 13px;
+  }
+
+  /* ── JD preview ── */
+  .jd-preview {
+    background: var(--bg3); border-radius: var(--r); padding: 1rem;
+    font-size: 12px; color: var(--text2); line-height: 1.7; white-space: pre-wrap;
+    max-height: 120px; overflow: hidden; position: relative;
+  }
+  .jd-preview::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+    height: 40px; background: linear-gradient(transparent, var(--bg3));
+  }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 1.5rem 0; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+  </div>
+  <div class="brand">Resume<span>AI</span> Screener</div>
+  <div class="badge">NLP + TF-IDF + Cosine Similarity</div>
+</header>
+
+<div class="container">
+
+  <!-- Input panel -->
+  <div class="grid-2" id="input-panel">
+
+    <!-- Left: Job Description -->
+    <div class="card">
+      <div class="card-title"><div class="dot"></div> Job Description</div>
+      <textarea id="jd-input" placeholder="Paste your full job description here…
+
+Include:
+• Required skills & technologies
+• Years of experience needed
+• Education requirements
+• Responsibilities"></textarea>
+      <div style="margin-top:0.75rem; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-ghost" style="margin-top:0; flex:1; font-size:12px;" onclick="loadSampleJD()">
+          📋 Load sample JD
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Upload + Actions -->
+    <div class="card">
+      <div class="card-title"><div class="dot"></div> Upload Resumes</div>
+
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" multiple accept=".pdf,.docx,.doc,.txt"
+               onchange="handleFiles(this.files)">
+        <div class="upload-icon">📂</div>
+        <p><strong>Drag & drop</strong> or click to upload</p>
+        <p style="font-size:11px; margin-top:4px; color:var(--text3)">PDF · DOCX · TXT — up to 10 MB each</p>
+      </div>
+
+      <div class="file-list" id="file-list"></div>
+
+      <hr style="margin:1rem 0">
+
+      <button class="btn btn-primary" id="screen-btn" onclick="runScreen()" disabled>
+        🚀 Screen Resumes
+      </button>
+      
+      <div id="error-box"></div>
+    </div>
+
+  </div>
+
+  <!-- Results -->
+  <div id="results"></div>
+
+</div>
+
+<script>
+const API = '';  // same origin
+let files = [];
+
+// ── Sample JD ──────────────────────────────────────────────────────────────
+function loadSampleJD() {
+  document.getElementById('jd-input').value = `We are looking for a Senior Python Developer with strong experience in machine learning and backend development.
+
+Requirements:
+- 3+ years of Python development experience
+- Strong knowledge of machine learning frameworks: TensorFlow, PyTorch, or scikit-learn
+- Experience with REST API development using Flask or FastAPI
+- Proficiency in SQL and NoSQL databases (PostgreSQL, MongoDB)
+- Familiarity with Docker, Kubernetes, and CI/CD pipelines
+- Excellent problem-solving and communication skills
+- Bachelor's degree in Computer Science or related field
+
+Nice to have: NLP experience, AWS/GCP cloud platforms, React`;
+  updateBtn();
+}
+
+// ── File handling ──────────────────────────────────────────────────────────
+function handleFiles(newFiles) {
+  for (const f of newFiles) {
+    if (!files.find(x => x.name === f.name)) files.push(f);
+  }
+  renderFileList();
+  updateBtn();
+}
+
+function removeFile(name) {
+  files = files.filter(f => f.name !== name);
+  renderFileList();
+  updateBtn();
+}
+
+function renderFileList() {
+  const el = document.getElementById('file-list');
+  if (!files.length) { el.innerHTML = ''; return; }
+  el.innerHTML = files.map(f => {
+    const ext = f.name.split('.').pop().toUpperCase();
+    return `<div class="file-chip">
+      <span class="ext">${ext}</span>
+      <span style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+      <button onclick="removeFile('${f.name}')" title="Remove">×</button>
+    </div>`;
+  }).join('');
+}
+
+function updateBtn() {
+  const hasJD = document.getElementById('jd-input').value.trim().length > 20;
+  const hasFiles = files.length > 0;
+  document.getElementById('screen-btn').disabled = !(hasJD && hasFiles);
+}
+
+document.getElementById('jd-input').addEventListener('input', updateBtn);
+
+// ── Drag & drop ────────────────────────────────────────────────────────────
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag');
+  handleFiles(e.dataTransfer.files);
+});
+
+// ── Screen ─────────────────────────────────────────────────────────────────
+function runScreen() {
+  const jd = document.getElementById('jd-input').value.trim();
+  if (!jd || !files.length) return;
+
+  showLoading('Parsing resumes…');
+  document.getElementById('error-box').innerHTML = '';
+
+  const fd = new FormData();
+  fd.append('job_description', jd);
+  files.forEach(f => fd.append('resumes', f));
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', 'http://localhost:5050/api/screen');
+  xhr.onload = function() {
+    try {
+      const data = JSON.parse(xhr.responseText);
+      if (xhr.status !== 200) throw new Error(data.error || 'Server error');
+      renderResults(data.candidates, jd);
+    } catch(e) {
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('error-box').innerHTML =
+        `<div class="error-msg">❌ ${e.message}</div>`;
+    }
+  };
+  xhr.onerror = function() {
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('error-box').innerHTML =
+      `<div class="error-msg">❌ Could not connect. Make sure Flask is running: python3 app.py</div>`;
+  };
+  xhr.send(fd);
+}
+
+// ── Demo ───────────────────────────────────────────────────────────────────
+function runDemo() {
+  const jd = document.getElementById('jd-input').value.trim();
+  showLoading('Running demo screening…');
+  document.getElementById('error-box').innerHTML = '';
+
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', 'http://localhost:5050/api/demo');
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.onload = function() {
+    try {
+      const data = JSON.parse(xhr.responseText);
+      if (xhr.status !== 200) throw new Error(data.error || 'Server error');
+      renderResults(data.candidates, jd || '(default JD)');
+    } catch(e) {
+      document.getElementById('results').innerHTML = '';
+      document.getElementById('error-box').innerHTML =
+        `<div class="error-msg">❌ ${e.message}. Make sure Flask is running: python3 app.py</div>`;
+    }
+  };
+  xhr.onerror = function() {
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('error-box').innerHTML =
+      `<div class="error-msg">❌ Could not connect. Make sure Flask is running: python3 app.py</div>`;
+  };
+  xhr.send(JSON.stringify({ job_description: jd || '' }));
+}
+
+// ── Loading state ──────────────────────────────────────────────────────────
+function showLoading(msg) {
+  document.getElementById('results').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <p>${msg}</p>
+    </div>`;
+}
+
+// ── Render results ─────────────────────────────────────────────────────────
+function renderResults(candidates, jd) {
+  if (!candidates || !candidates.length) {
+    document.getElementById('results').innerHTML = `
+      <div class="empty"><div class="icon">🔍</div><p>No candidates to show.</p></div>`;
+    return;
+  }
+
+  const topScore = candidates[0]?.total || 0;
+  const avg = (candidates.reduce((s,c) => s + (c.total||0), 0) / candidates.length).toFixed(1);
+  const excellent = candidates.filter(c => c.tier === 'Excellent').length;
+  const good = candidates.filter(c => c.tier === 'Good').length;
+
+  let html = `
+    <div class="results-header">
+      <div class="results-title">Screening Results</div>
+      <div class="results-count">${candidates.length} candidate${candidates.length>1?'s':''} ranked</div>
+    </div>
+
+    <div class="summary-stats">
+      <div class="stat-card"><div class="stat-val" style="color:var(--accent2)">${candidates.length}</div><div class="stat-lbl">Total screened</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--green)">${excellent}</div><div class="stat-lbl">Excellent tier</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--teal)">${good}</div><div class="stat-lbl">Good tier</div></div>
+      <div class="stat-card"><div class="stat-val" style="color:var(--amber)">${avg}%</div><div class="stat-lbl">Avg match score</div></div>
+    </div>`;
+
+  candidates.forEach((c, i) => {
+    const tier = (c.tier || '').replace(/\s/g, '-');
+    const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+    const allSkills = Object.values(c.skills || {}).flat();
+    const matched = c.matched_skills || [];
+    const missing = c.missing_skills || [];
+    const extra = allSkills.filter(s => !matched.includes(s) && !missing.includes(s));
+    const exp = c.experience_years ? `${c.experience_years}y exp` : '';
+    const eduArr = Array.isArray(c.education) ? c.education : (c.education ? [c.education] : []);
+    const edu = eduArr.slice(0,2).join(', ');
+
+    const scoreColor = c.total >= 75 ? 'var(--green)' : c.total >= 55 ? 'var(--teal)' : c.total >= 35 ? 'var(--amber)' : 'var(--red)';
+
+    html += `
+    <div class="candidate">
+      <div class="candidate-header">
+        <div class="rank-badge ${rankClass}">#${c.rank}</div>
+        <div>
+          <div class="cand-name">${c.name || c.file}</div>
+          <div class="cand-meta">${[c.email, c.phone, exp, edu].filter(Boolean).join(' · ')}</div>
+        </div>
+        <div class="tier-pill tier-${c.tier === 'Below Average' ? 'below' : c.tier}">${c.tier}</div>
+      </div>
+
+      <div class="score-section">
+        <div class="score-main">
+          <span class="score-big" style="color:${scoreColor}">${c.total}%</span>
+          <span class="score-label">match score</span>
+        </div>
+        <div class="score-bar-wrap">
+          <div class="score-bar-fill" style="width:${c.total}%"></div>
+        </div>
+      </div>
+
+      <div class="sub-scores">
+        <div class="sub-score"><div class="sub-score-label">Text sim.</div><div class="sub-score-val c-text">${c.text_similarity}%</div></div>
+        <div class="sub-score"><div class="sub-score-label">Skill match</div><div class="sub-score-val c-teal">${c.skill_match}%</div></div>
+        <div class="sub-score"><div class="sub-score-label">Experience</div><div class="sub-score-val c-amber">${c.experience}%</div></div>
+        <div class="sub-score"><div class="sub-score-label">Education</div><div class="sub-score-val c-green">${c.education_score ?? '—'}%</div></div>
+      </div>
+
+      <button class="expand-btn" onclick="toggleExpand(this)">
+        <span>▸</span> Show skills breakdown
+      </button>
+      <div class="expandable">
+        <div class="skills-section">
+          ${matched.length ? `<div class="skill-group">
+            <div class="skill-group-title">✅ Matched (${matched.length})</div>
+            <div class="skill-tags">${matched.map(s=>`<span class="skill-tag skill-matched">${s}</span>`).join('')}</div>
+          </div>` : ''}
+          ${missing.length ? `<div class="skill-group">
+            <div class="skill-group-title">❌ Missing (${missing.length})</div>
+            <div class="skill-tags">${missing.map(s=>`<span class="skill-tag skill-missing">${s}</span>`).join('')}</div>
+          </div>` : ''}
+          ${extra.length ? `<div class="skill-group">
+            <div class="skill-group-title">➕ Additional skills</div>
+            <div class="skill-tags">${extra.slice(0,12).map(s=>`<span class="skill-tag skill-extra">${s}</span>`).join('')}</div>
+          </div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('results').innerHTML = html;
+
+  // Animate bars in
+  setTimeout(() => {
+    document.querySelectorAll('.score-bar-fill').forEach(b => {
+      b.style.width = b.style.width;
+    });
+  }, 50);
+}
+
+function toggleExpand(btn) {
+  const box = btn.nextElementSibling;
+  box.classList.toggle('open');
+  btn.querySelector('span').textContent = box.classList.contains('open') ? '▾' : '▸';
+  btn.childNodes[1].textContent = box.classList.contains('open') ? ' Hide skills breakdown' : ' Show skills breakdown';
+}
+</script>
+</body>
+</html>
